@@ -85,7 +85,7 @@ func (s *TCPServer) handleConnection(c net.Conn) {
 		typ, msg, err := s.readMessage(c)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
-				log.Printf("Connection closed by client")
+				log.Printf("Connection closed by client %s", c.RemoteAddr())
 				break
 			} else {
 				log.Printf("Error reading message: %+v", err)
@@ -93,7 +93,7 @@ func (s *TCPServer) handleConnection(c net.Conn) {
 			}
 		}
 		if typ[0] == 0x58 {
-			log.Println("Received Terminate message")
+			log.Printf("Received Terminate message from %s", c.RemoteAddr())
 			return // Terminate connection
 		}
 
@@ -106,9 +106,10 @@ func (s *TCPServer) handleConnection(c net.Conn) {
 
 			if res == nil {
 				c.Write(acceptMsg)
+			} else {
+				c.Write(s.buildCompletedResponse(res))
 			}
 
-			c.Write(s.buildCompletedResponse(res))
 			c.Write(readyForQuery)
 		}
 	}
